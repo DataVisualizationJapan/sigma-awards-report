@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sigma Awards 選出傾向レポート</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@400;500;700&family=Zen+Old+Mincho:wght@600;700&display=swap" rel="stylesheet">
+<style>
+/* layout: a scrolling report — findings first, then one chart per question, Japan section, winners table, method */
+:root{
+  --bg:#f4f5f3; --surface:#fcfcfb; --ink:#141a1c; --ink-2:#4b5557; --ink-3:#77807f;
+  --line:#dcdfdb; --accent:#1f5fae; --s1:#2a78d6; --s2:#eb6834; --s3:#1baf7a; --mark:#b4530a;
+  --font-display:"Zen Old Mincho","Hiragino Mincho ProN","Yu Mincho",serif;
+  --font-body:"Zen Kaku Gothic New","Hiragino Kaku Gothic ProN","Yu Gothic",Meiryo,sans-serif;
+  color-scheme:light;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --bg:#131615; --surface:#1a1d1c; --ink:#eef0ec; --ink-2:#bcc3bf; --ink-3:#8b9390;
+    --line:#2f3533; --accent:#7fb2f0; --s1:#3987e5; --s2:#d95926; --s3:#199e70; --mark:#f0a35c;
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#131615; --surface:#1a1d1c; --ink:#eef0ec; --ink-2:#bcc3bf; --ink-3:#8b9390;
+  --line:#2f3533; --accent:#7fb2f0; --s1:#3987e5; --s2:#d95926; --s3:#199e70; --mark:#f0a35c;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font-body);font-size:15px;line-height:1.75}
+a{color:var(--accent);text-underline-offset:3px}
+a:focus-visible,button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.wrap{max-width:1040px;margin:0 auto;padding:28px 20px 64px;display:flex;flex-direction:column;gap:26px}
+header h1{font-family:var(--font-display);font-size:clamp(26px,4vw,38px);line-height:1.25;margin:0 0 10px;text-wrap:balance}
+header p{margin:0;max-width:41em;color:var(--ink-2)}
+.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-top:16px}
+.tile{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:10px 14px}
+.tile .v{font-size:26px;font-weight:700;font-variant-numeric:tabular-nums;line-height:1.3}
+.tile .k{font-size:12.5px;color:var(--ink-2)}
+section{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:20px}
+h2{font-family:var(--font-display);font-size:21px;margin:0 0 6px;text-wrap:balance}
+h3{font-size:14.5px;margin:18px 0 6px}
+.lead{margin:0 0 14px;color:var(--ink-2);font-size:14px;max-width:44em}
+.note{margin:10px 0 0;color:var(--ink-3);font-size:12.5px;max-width:52em}
+ol.find{margin:0;padding-left:1.4em;display:flex;flex-direction:column;gap:8px;max-width:46em}
+ol.find b{font-variant-numeric:tabular-nums}
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:18px}
+.chart{position:relative;overflow-x:auto}
+svg{display:block}
+svg text{font-family:var(--font-body);fill:var(--ink-2);font-size:11.5px}
+svg text.nm{fill:var(--ink);font-size:12px}
+svg text.hl{fill:var(--mark);font-weight:700}
+svg text.val{fill:var(--ink);font-variant-numeric:tabular-nums}
+svg .grid{stroke:var(--line);stroke-width:1}
+svg .ref{stroke:var(--ink-3);stroke-width:1.5}
+svg .ci{stroke:var(--s1);stroke-width:2;stroke-linecap:round;opacity:.55}
+svg .dot{fill:var(--s1);stroke:var(--surface);stroke-width:2}
+svg .ci.hl{stroke:var(--mark)} svg .dot.hl{fill:var(--mark)}
+svg .bar{fill:var(--s1)}
+svg .line{fill:none;stroke:var(--s1);stroke-width:2;stroke-linejoin:round;stroke-linecap:round}
+svg .area{fill:var(--s1);opacity:.12}
+svg .hit{fill:transparent}
+svg .hit:hover{fill:var(--ink);opacity:.05}
+.tip{position:absolute;pointer-events:none;background:var(--ink);color:var(--surface);font-size:12px;line-height:1.5;padding:5px 9px;border-radius:6px;transform:translate(-50%,-115%);display:none;font-variant-numeric:tabular-nums;z-index:2;max-width:260px}
+.sparks{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px}
+.spark{border:1px solid var(--line);border-radius:8px;padding:8px 10px}
+.spark .t{font-size:12.5px;font-weight:700;line-height:1.35}
+.spark .e{font-size:11.5px;color:var(--ink-3)}
+.legend{display:flex;flex-wrap:wrap;gap:6px 16px;font-size:12.5px;color:var(--ink-2);margin:0 0 8px}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:5px}
+.tw{overflow-x:auto}
+table{border-collapse:collapse;font-size:13px;width:100%}
+th,td{text-align:left;padding:6px 10px 6px 0;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-weight:700;color:var(--ink-2);font-size:12px;white-space:nowrap}
+td.num,th.num{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+td .sub{display:block;color:var(--ink-3);font-size:12px}
+.pill{display:inline-block;font-size:11.5px;border-radius:4px;padding:0 6px;line-height:1.7;border:1px solid var(--line);color:var(--ink-2);white-space:nowrap}
+.pill.on{border-color:var(--mark);color:var(--mark);font-weight:700}
+.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:10px}
+button.seg{font:inherit;font-size:13px;line-height:1.3;border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:999px;padding:5px 11px;cursor:pointer}
+button.seg[aria-pressed="true"]{background:var(--ink);color:var(--surface);border-color:var(--ink)}
+.defs{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px 28px;font-size:13px}
+.defs h3{margin:0 0 4px;font-size:13.5px}
+.defs p,.defs ul{margin:0;color:var(--ink-2)}
+.defs ul{padding-left:1.2em}
+.defs li{overflow-wrap:anywhere}
+@media (max-width:560px){section{padding:16px 14px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <h1>Sigma Awards 選出傾向レポート</h1>
+  <p>2020〜2026年の全応募3,899件をもとに、ショートリスト以上に選ばれた作品の特徴を調べました。日本から応募を準備する人が、過去の傾向を踏まえて作品と応募の形を考えるための資料です。</p>
+  <div class="tiles" id="tiles"></div>
+</header>
+
+<section aria-labelledby="h-find">
+  <h2 id="h-find">要点</h2>
+  <ol class="find" id="find"></ol>
+  <p class="note">ここでいう「選出」は、ショートリスト・受賞・特別表彰のいずれかに入ったことを指します。「◯倍」は、年ごとの選出率の違いをならしたうえでの平均との比です。算出方法は末尾にあります。</p>
+</section>
+
+<section aria-labelledby="h-year">
+  <h2 id="h-year">応募数と選出率の推移</h2>
+  <p class="lead">応募は毎年500〜600件前後で安定しています。一方、ショートリストの枠は年によって大きく違い、選出率は2021年の約26%から2026年の約6%まで開きがあります。</p>
+  <div class="grid2">
+    <div><h3>応募数</h3><div class="chart" id="cN"></div></div>
+    <div><h3>選出率（ショートリスト以上）</h3><div class="chart" id="cR"></div></div>
+  </div>
+  <p class="note">この開きがあるため、以下の比較はすべて年ごとの選出率をならして計算しています。</p>
+</section>
+
+<section aria-labelledby="h-tag">
+  <h2 id="h-tag">どんな作品が選ばれやすいか</h2>
+  <p class="lead">応募者が自分で付けたタグごとに、選出数が平均の何倍かを示します。点が縦線（1.0）より右なら平均より選ばれやすく、左なら選ばれにくい傾向です。横棒は95%の幅で、縦線をまたぐものは差があるとは言えません。</p>
+  <div class="row" role="group" aria-label="並び順"><button type="button" class="seg" data-sort="ratio" aria-pressed="true">比の大きい順</button><button type="button" class="seg" data-sort="n" aria-pressed="false">応募の多い順</button></div>
+  <div class="chart" id="cTag"></div>
+</section>
+
+<section aria-labelledby="h-trend">
+  <h2 id="h-trend">増えた手法、減った手法</h2>
+  <p class="lead">各年の応募のうち、そのタグやツールを挙げた作品の割合です。公開情報調査（OSINT）、衛星画像、AI・機械学習が急増し、D3.jsやRは減りました。縦軸はすべて0〜70%でそろえています。</p>
+  <div class="sparks" id="sparks"></div>
+</section>
+
+<section aria-labelledby="h-tool">
+  <h2 id="h-tool">使われたツールと選出</h2>
+  <p class="lead">応募フォームのツール欄をもとにした同じ比較です。応募100件以上のツールに絞りました。</p>
+  <div class="chart" id="cTool"></div>
+  <p class="note">ツールは作品の性格を映しているだけの可能性があります。たとえばPythonやQGISを挙げる作品は、大規模なデータ処理や地理分析を伴う調査報道に多いと考えられます。</p>
+</section>
+
+<section aria-labelledby="h-form">
+  <h2 id="h-form">応募の形と組織の規模</h2>
+  <p class="lead">単独作品とポートフォリオ、大規模と小規模の編集部を比べました。</p>
+  <div class="chart" id="cForm"></div>
+  <p class="note" id="formNote"></p>
+</section>
+
+<section aria-labelledby="h-country">
+  <h2 id="h-country">国・地域別</h2>
+  <p class="lead">応募40件以上の国・地域に、日本・韓国・香港を加えました。応募が少ない国ほど横棒が長く、判断は難しくなります。</p>
+  <div class="chart" id="cCountry"></div>
+  <h3>受賞の多い国・地域</h3>
+  <p class="lead" id="winC" style="margin-bottom:0"></p>
+</section>
+
+<section aria-labelledby="h-jp">
+  <h2 id="h-jp">日本からの応募</h2>
+  <p class="lead" id="jpLead"></p>
+  <div class="grid2">
+    <div><h3>年ごとの応募数と選出数</h3><div class="chart" id="cJp"></div></div>
+    <div><h3>日本の応募に多いタグ、少ないタグ</h3><div class="tw"><table id="jpTags"></table></div></div>
+  </div>
+  <h3>全応募の一覧</h3>
+  <div class="tw"><table id="jpTable"></table></div>
+</section>
+
+<section aria-labelledby="h-win">
+  <h2 id="h-win">受賞作と特別表彰の一覧</h2>
+  <p class="lead">題名から、Data Visualization Japanのカタログの該当ページに移動します。</p>
+  <div class="row" id="winYears" role="group" aria-label="年で絞り込む"></div>
+  <div class="tw"><table id="winTable"></table></div>
+</section>
+
+<section aria-labelledby="h-dja">
+  <h2 id="h-dja">前身のData Journalism Awards（2012〜2019年）</h2>
+  <p class="lead" id="djaLead"></p>
+  <div class="legend"><span><i style="background:var(--s1)"></i>受賞</span><span><i style="background:var(--s2)"></i>特別表彰</span><span><i style="background:var(--s3)"></i>ショートリスト</span></div>
+  <div class="chart" id="cDja"></div>
+  <p class="note">この期間は全応募の記録がなく、保存された資料で確認できる受賞・候補だけです。2015年は候補の一覧がほとんど残っていません。選出率は計算できないため、Sigma Awardsの分析とは分けています。</p>
+</section>
+
+<section aria-labelledby="h-method">
+  <h2 id="h-method">方法と注意</h2>
+  <div class="defs">
+    <div><h3>「◯倍」の計算</h3><p>グループ内の各作品に、その応募年の全体の選出率を割り当てて合計し、見込みの選出数とします。実際の選出数をこれで割った値が比です。年による枠の違いに左右されにくくなります。</p></div>
+    <div><h3>95%の幅</h3><p>選出数のばらつきをポアソン分布で近似して求めました。幅が1.0をまたぐ場合、平均との差は偶然でも起こりうる範囲です。</p></div>
+    <div><h3>読むときの注意</h3><p>タグとツールは応募者の自己申告で、付け方に個人差があります。比は相関であり、タグを付ければ選ばれるという意味ではありません。複数の特徴は重なり合うため、個別の効果は切り分けていません。</p></div>
+    <div><h3>扱っていないこと</h3><p>チームの人数と作品の言語は、記入が自由記述でそろっていないため集計していません。審査員コメントの内容分析も含めていません。</p></div>
+    <div><h3>データ</h3><ul>
+      <li>応募データ：<a href="https://github.com/Sigma-Awards/The-Sigma-Awards-projects-data">The Sigma Awards projects data</a>（The Sigma Awards / GIJN、CC BY-NC-SA 4.0）</li>
+      <li>整形済みデータとDJAの記録：<a href="https://github.com/DataVisualizationJapan/sigma-awards">DataVisualizationJapan/sigma-awards</a>（<span id="built"></span> 時点）</li>
+      <li>各作品のページ：<a href="https://sigma-awards.data-visualization.jp/">Sigma Awards エントリー一覧</a></li>
+    </ul></div>
+    <div><h3>利用条件</h3><p>もとのデータがCC BY-NC-SA 4.0のため、このレポートの数値や図を使う場合も、出典の表示・非営利・同じ条件での共有が必要です。</p></div>
+  </div>
+</section>
+</div>
+<div class="tip" id="tip" style="position:fixed"></div>
+
+<script type="application/json" id="data">__DATA__</script>
+<script>
+(function(){
+"use strict";
+var S = JSON.parse(document.getElementById('data').textContent);
+var SITE = 'https://sigma-awards.data-visualization.jp';
+var TAG = {"Investigation":"調査報道","Infographics":"インフォグラフィックス","Chart":"チャート","Explainer":"解説","Database":"データベース","Open data":"オープンデータ","Long-form":"長編記事","Map":"地図","Politics":"政治","Human rights":"人権","Illustration":"イラスト","Environment":"環境","Video":"動画","Health":"健康・医療","Economy":"経済","Solutions journalism":"解決志向の報道","Multiple-newsroom collaboration":"複数編集部の協働","Fact-checking":"ファクトチェック","Cross-border":"国境をまたぐ取材","OSINT":"公開情報調査（OSINT）","Satellite images":"衛星画像","Crime":"犯罪","Women":"女性","Business":"ビジネス","Corruption":"汚職","News application":"ニュースアプリ","Documentary":"ドキュメンタリー","Elections":"選挙","Culture":"文化","Breaking news":"速報","Employment":"雇用","Audio":"音声","Crowdsourcing":"クラウドソーシング","Agriculture":"農業","Lifestyle":"ライフスタイル","Gun violence":"銃暴力","Immigration":"移民","Quiz / game":"クイズ・ゲーム","Arts":"芸術","Podcast / radio":"ポッドキャスト・ラジオ","Sports":"スポーツ","Money-laundering":"資金洗浄","Mobile App":"モバイルアプリ","Terrorism":"テロ",
+ "Scraping":"スクレイピング","Animation":"アニメーション","Personalisation":"パーソナライズ","Drone":"ドローン","3D modeling":"3Dモデリング","AI/Machine learning":"AI・機械学習","Sensor":"センサー"};
+var CN = {"United States":"米国","Brazil":"ブラジル","Spain":"スペイン","United Kingdom":"英国","Singapore":"シンガポール","India":"インド","Germany":"ドイツ","Taiwan":"台湾","Egypt":"エジプト","Nigeria":"ナイジェリア","Mexico":"メキシコ","China":"中国","Netherlands":"オランダ","Portugal":"ポルトガル","Canada":"カナダ","Ukraine":"ウクライナ","Philippines":"フィリピン","Argentina":"アルゼンチン","Pakistan":"パキスタン","Kenya":"ケニア","Indonesia":"インドネシア","France":"フランス","Russia":"ロシア","Australia":"オーストラリア","Kyrgyzstan":"キルギス","Finland":"フィンランド","Japan":"日本","Hong Kong S.A.R., China":"香港","Korea, Republic of":"韓国","Peru":"ペルー","Romania":"ルーマニア","Sudan":"スーダン","Greece":"ギリシャ","Switzerland":"スイス","Colombia":"コロンビア","Italy":"イタリア","Norway":"ノルウェー","Belgium":"ベルギー","Poland":"ポーランド","Turkey":"トルコ","South Africa":"南アフリカ","Malaysia":"マレーシア","Chile":"チリ","Sweden":"スウェーデン","Denmark":"デンマーク"};
+function ja(m,k){ return m[k] || k; }
+function esc(s){ return String(s==null?'':s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];}); }
+function $(id){ return document.getElementById(id); }
+var tip=$('tip');
+document.addEventListener('mousemove',function(ev){
+  var t = ev.target.closest && ev.target.closest('[data-tip]');
+  if(!t){ tip.style.display='none'; return; }
+  tip.textContent = t.getAttribute('data-tip'); tip.style.left = ev.clientX+'px'; tip.style.top = ev.clientY+'px'; tip.style.display='block';
+});
+var Y = S.years, T = S.total;
+var base = Math.round(1000*T.rec/T.n)/10;
+
+/* tiles */
+$('tiles').innerHTML = [[T.n.toLocaleString('ja-JP'),'応募（2020〜2026年）'],[T.rec,'ショートリスト以上'],[T.win,'受賞'],[T.countries,'国・地域'],[S.japan.stats.n,'日本からの応募']].map(function(t){return '<div class="tile"><div class="v">'+t[0]+'</div><div class="k">'+t[1]+'</div></div>';}).join('');
+
+function byName(arr,n){ return arr.filter(function(x){return x.name===n;})[0]; }
+var K=S.kind, Z=S.size, tg=function(n){return byName(S.tags,n);}, tl=function(n){return byName(S.tools,n);};
+var jpE=S.japan.entries, jpRec=jpE.filter(function(e){return e.result!=='entry';}), jpPf=jpE.filter(function(e){return e.kind==='portfolio';});
+$('find').innerHTML = [
+ '<b>ポートフォリオでの応募は、平均の'+K.portfolio.ratio+'倍選ばれています。</b>'+K.portfolio.n+'件のうち'+K.portfolio.rec+'件が選出されました。単独作品は'+K.project.ratio+'倍です。',
+ '<b>協働と検証の手法を伴う作品が強い傾向です。</b>複数編集部の協働は'+tg('Multiple-newsroom collaboration').ratio+'倍、衛星画像は'+tg('Satellite images').ratio+'倍、公開情報調査（OSINT）は'+tg('OSINT').ratio+'倍でした。スポーツ（'+tg('Sports').ratio+'倍）、芸術（'+tg('Arts').ratio+'倍）、文化（'+tg('Culture').ratio+'倍）は低めです。',
+ '<b>応募の中身は調査報道に寄ってきました。</b>OSINTを挙げる応募は2020年の'+tg('OSINT').share['2020']+'%から2026年の'+tg('OSINT').share['2026']+'%に、AI・機械学習は'+tl('AI/Machine learning').share['2020']+'%から'+tl('AI/Machine learning').share['2026']+'%に増えました。D3.jsは'+tl('D3.js').share['2020']+'%から'+tl('D3.js').share['2026']+'%に減っています。',
+ '<b>組織の規模による差は小さく、受賞数は小規模のほうが多いくらいです。</b>選出の比は大規模'+Z.Big.ratio+'倍、小規模'+Z.Small.ratio+'倍で、どちらも幅が1.0をまたぎます。受賞は小規模'+Z.Small.win+'件、大規模'+Z.Big.win+'件でした。',
+ '<b>日本からは'+jpE.length+'件が応募し、'+jpRec.length+'件がショートリストに入りました。受賞はまだありません。</b>選出'+jpRec.length+'件のうち'+jpRec.filter(function(e){return e.kind==='portfolio';}).length+'件がポートフォリオで、日本からのポートフォリオ応募'+jpPf.length+'件は'+(jpPf.every(function(e){return e.result!=='entry';})?'すべて':'一部が')+'選出されています。'
+].map(function(s){return '<li>'+s+'</li>';}).join('');
+
+/* simple bar chart with a label on every bar (7–8 bars) */
+function bars(el, rows, opt){
+  var W=420,H=200,L=8,R=8,Tp=22,B=24, pw=W-L-R, ph=H-Tp-B, n=rows.length, bw=pw/n, max=opt.max||Math.max.apply(null,rows.map(function(r){return r.v;}));
+  var s='<svg viewBox="0 0 '+W+' '+H+'" width="100%" style="min-width:300px" role="img" aria-label="'+esc(opt.label)+'">';
+  s+='<line class="grid" x1="'+L+'" x2="'+(W-R)+'" y1="'+(Tp+ph)+'" y2="'+(Tp+ph)+'"/>';
+  rows.forEach(function(r,i){
+    var h=max?(r.v/max)*ph:0, x=L+i*bw+4, w=bw-8, y=Tp+ph-h, rr=Math.min(4,h);
+    s+='<path class="bar" d="M'+x+' '+(Tp+ph)+'V'+(y+rr)+'q0 -'+rr+' '+rr+' -'+rr+'H'+(x+w-rr)+'q'+rr+' 0 '+rr+' '+rr+'V'+(Tp+ph)+'Z"/>';
+    if(r.v2!=null){ var h2=(r.v2/max)*ph; s+='<rect x="'+x+'" y="'+(Tp+ph-h2)+'" width="'+w+'" height="'+h2+'" fill="var(--mark)"/>'; }
+    s+='<text class="val" x="'+(x+w/2)+'" y="'+(y-5)+'" text-anchor="middle">'+r.t+'</text><text x="'+(x+w/2)+'" y="'+(H-7)+'" text-anchor="middle">'+r.k+'</text>';
+    s+='<rect class="hit" data-tip="'+esc(r.tip)+'" x="'+(L+i*bw)+'" y="0" width="'+bw+'" height="'+H+'"/>';
+  });
+  el.innerHTML=s+'</svg>';
+}
+bars($('cN'), Y.map(function(y){return {k:y.year,v:y.n,t:y.n,tip:y.year+'年：応募'+y.n+'件（'+y.countries+'の国・地域、ポートフォリオ'+y.portfolio+'件）'};}), {label:'年ごとの応募数'});
+bars($('cR'), Y.map(function(y){var p=Math.round(1000*y.rec/y.n)/10; return {k:y.year,v:p,t:p+'%',tip:y.year+'年：'+y.n+'件中'+y.rec+'件を選出（うち受賞'+y.win+'件）'};}), {label:'年ごとの選出率'});
+
+/* dot + interval chart */
+function dots(el, rows, opt){
+  var maxX = Math.ceil(Math.max.apply(null, rows.map(function(r){return r.hi;}).concat([1.5]))*2)/2;
+  var LW=opt.lw||210, RW=132, W=780, PL=LW, PR=W-RW, pw=PR-PL, rh=24, Tp=26, H=Tp+rows.length*rh+8;
+  function x(v){ return PL + Math.min(v,maxX)/maxX*pw; }
+  var s='<svg viewBox="0 0 '+W+' '+H+'" width="100%" style="min-width:640px" role="img" aria-label="'+esc(opt.label)+'">';
+  for(var g=0; g<=maxX+0.001; g+=0.5){ s+='<line class="'+(g===1?'ref':'grid')+'" x1="'+x(g)+'" x2="'+x(g)+'" y1="'+(Tp-4)+'" y2="'+(H-6)+'"/><text x="'+x(g)+'" y="'+(Tp-10)+'" text-anchor="middle">'+(g===1?'平均 1.0':g.toFixed(1))+'</text>'; }
+  s+='<text x="'+(W-4)+'" y="'+(Tp-10)+'" text-anchor="end">選出／応募</text>';
+  rows.forEach(function(r,i){
+    var cy=Tp+i*rh+rh/2, hl=r.hl?' hl':'';
+    s+='<text class="nm'+hl+'" x="'+(PL-10)+'" y="'+(cy+4)+'" text-anchor="end">'+esc(r.label)+'</text>';
+    s+='<line class="ci'+hl+'" x1="'+x(r.lo)+'" x2="'+x(r.hi)+'" y1="'+cy+'" y2="'+cy+'"/><circle class="dot'+hl+'" cx="'+x(r.ratio)+'" cy="'+cy+'" r="5"/>';
+    s+='<text class="val" x="'+(W-4)+'" y="'+(cy+4)+'" text-anchor="end">'+r.rec+' / '+r.n.toLocaleString('ja-JP')+'</text>';
+    s+='<rect class="hit" data-tip="'+esc(r.label+'：'+r.ratio+'倍（95%の幅 '+r.lo+'〜'+r.hi+'）／ 応募'+r.n+'件、選出'+r.rec+'件（見込み'+r.exp+'件）、うち受賞'+r.win+'件')+'" x="0" y="'+(cy-rh/2)+'" width="'+W+'" height="'+rh+'"/>';
+  });
+  el.innerHTML=s+'</svg>';
+}
+function tagRows(sort){
+  var a=S.tags.filter(function(t){return t.n>=100;}).map(function(t){ return {label:ja(TAG,t.name), n:t.n, rec:t.rec, win:t.win, exp:t.exp, ratio:t.ratio, lo:t.lo, hi:t.hi}; });
+  a.sort(function(p,q){ return sort==='n' ? q.n-p.n : q.ratio-p.ratio; }); return a;
+}
+dots($('cTag'), tagRows('ratio'), {label:'タグごとの選出の比'});
+document.querySelectorAll('button[data-sort]').forEach(function(b){ b.addEventListener('click',function(){
+  document.querySelectorAll('button[data-sort]').forEach(function(o){o.setAttribute('aria-pressed', String(o===b));});
+  dots($('cTag'), tagRows(b.dataset.sort), {label:'タグごとの選出の比'});
+});});
+dots($('cTool'), S.tools.filter(function(t){return t.n>=100;}).map(function(t){return {label:ja(TAG,t.name), n:t.n, rec:t.rec, win:t.win, exp:t.exp, ratio:t.ratio, lo:t.lo, hi:t.hi};}).sort(function(p,q){return q.ratio-p.ratio;}), {label:'ツールごとの選出の比'});
+dots($('cForm'), [['ポートフォリオ',K.portfolio],['単独作品',K.project],['大規模な編集部',Z.Big],['小規模な編集部',Z.Small]].map(function(p){var t=p[1]; return {label:p[0], n:t.n, rec:t.rec, win:t.win, exp:t.exp, ratio:t.ratio, lo:t.lo, hi:t.hi};}), {label:'応募の形と組織規模ごとの選出の比'});
+$('formNote').textContent = '受賞（特別表彰を除く）の件数は、ポートフォリオ'+K.portfolio.win+'件、単独作品'+K.project.win+'件、大規模'+Z.Big.win+'件、小規模'+Z.Small.win+'件です。規模の区分は応募者の申告によります。';
+dots($('cCountry'), S.countries.map(function(c){return {label:ja(CN,c.name), n:c.n, rec:c.rec, win:c.win, exp:c.exp, ratio:c.ratio, lo:c.lo, hi:c.hi, hl:c.name==='Japan'};}).sort(function(p,q){return q.ratio-p.ratio;}), {label:'国・地域ごとの選出の比', lw:130});
+$('winC').textContent = S.win_countries.map(function(c){return ja(CN,c[0])+' '+c[1]+'件';}).join('、')+'。国は応募時の申告によるもので、国際共同の作品も1か国として数えています。';
+
+/* small multiples */
+var SP=[['t','OSINT'],['t','Satellite images'],['l','AI/Machine learning'],['t','Cross-border'],['t','Investigation'],['t','Human rights'],['t','Fact-checking'],['l','QGIS'],['l','Google Sheets'],['l','D3.js'],['l','R'],['t','News application'],['t','Elections'],['l','Json']];
+$('sparks').innerHTML = SP.map(function(p){
+  var o=(p[0]==='t'?tg:tl)(p[1]); if(!o) return '';
+  var ys=Object.keys(o.share).sort(), v=ys.map(function(y){return o.share[y];}), W=150,H=70,L=4,R=4,Tp=14,B=4, pw=W-L-R, ph=H-Tp-B, MAX=70;
+  var pts=v.map(function(q,i){return [L+i*pw/(v.length-1), Tp+ph-(q/MAX)*ph];});
+  var d=pts.map(function(q,i){return (i?'L':'M')+q[0].toFixed(1)+' '+q[1].toFixed(1);}).join('');
+  var last=pts[pts.length-1];
+  var svg='<svg viewBox="0 0 '+W+' '+H+'" width="100%" role="img" aria-label="'+esc(ja(TAG,p[1]))+'の割合の推移"><line class="grid" x1="'+L+'" x2="'+(W-R)+'" y1="'+(Tp+ph)+'" y2="'+(Tp+ph)+'"/><path class="area" d="'+d+'L'+last[0]+' '+(Tp+ph)+'L'+pts[0][0]+' '+(Tp+ph)+'Z"/><path class="line" d="'+d+'"/><circle class="dot" cx="'+last[0]+'" cy="'+last[1]+'" r="4"/>'+
+    ys.map(function(y,i){return '<rect class="hit" data-tip="'+y+'年：'+v[i]+'%" x="'+(pts[i][0]-pw/(v.length-1)/2)+'" y="0" width="'+(pw/(v.length-1))+'" height="'+H+'"/>';}).join('')+'</svg>';
+  return '<div class="spark"><div class="t">'+esc(ja(TAG,p[1]))+'</div><div class="e">'+ys[0]+'年 '+v[0]+'% → '+ys[ys.length-1]+'年 '+v[v.length-1]+'%</div>'+svg+'</div>';
+}).join('');
+
+/* Japan */
+var JS=S.japan.stats;
+$('jpLead').textContent = '7年間で'+JS.n+'件が応募し、ショートリストは'+JS.rec+'件、受賞は0件です。選出の比は'+JS.ratio+'倍（95%の幅 '+JS.lo+'〜'+JS.hi+'）で、件数が少ないため平均より低いとは言い切れません。応募の中心は日本経済新聞社で、中日新聞、朝日新聞、東洋経済などが続きます。';
+bars($('cJp'), Object.keys(S.japan.by_year).sort().map(function(y){var o=S.japan.by_year[y]; return {k:y,v:o.n,v2:o.rec,t:o.n+(o.rec?'（選出'+o.rec+'）':''),tip:y+'年：応募'+o.n+'件、選出'+o.rec+'件'};}), {label:'日本からの年ごとの応募数と選出数'});
+var tp=S.japan.tagprofile, pick=tp.slice(0,6).concat(tp.slice(-6));
+$('jpTags').innerHTML='<thead><tr><th>タグ</th><th class="num">日本</th><th class="num">全体</th><th class="num">差</th></tr></thead><tbody>'+pick.map(function(r){var d=Math.round((r.jp-r.all)*10)/10; return '<tr><td>'+esc(ja(TAG,r.name))+'</td><td class="num">'+r.jp+'%</td><td class="num">'+r.all+'%</td><td class="num">'+(d>0?'+':'')+d+'</td></tr>';}).join('')+'</tbody>';
+var RL={entry:'応募',shortlist:'ショートリスト',winner:'受賞',mention:'特別表彰'};
+$('jpTable').innerHTML='<thead><tr><th>年</th><th>作品</th><th>組織</th><th>形</th><th>結果</th></tr></thead><tbody>'+jpE.map(function(e){
+  return '<tr><td class="num">'+e.year+'</td><td><a href="'+SITE+'/entries/'+esc(e.id)+'/" target="_blank" rel="noopener">'+esc(e.title)+'</a>'+(e.titleJa&&e.titleJa!==e.title?'<span class="sub">'+esc(e.titleJa)+'</span>':'')+'</td><td>'+esc(e.org)+'</td><td>'+(e.kind==='portfolio'?'ポートフォリオ':'単独')+'</td><td><span class="pill'+(e.result!=='entry'?' on':'')+'">'+RL[e.result]+'</span></td></tr>';
+}).join('')+'</tbody>';
+
+/* winners */
+var wy='all';
+function renderWin(){
+  var ys=['all'].concat(Y.map(function(y){return String(y.year);}).reverse());
+  $('winYears').innerHTML=ys.map(function(y){return '<button type="button" class="seg" data-y="'+y+'" aria-pressed="'+(wy===y)+'">'+(y==='all'?'すべて':y+'年')+'</button>';}).join('');
+  var rows=S.winners.filter(function(w){return wy==='all'||String(w.year)===wy;}).sort(function(a,b){return b.year-a.year;});
+  $('winTable').innerHTML='<thead><tr><th>年</th><th>作品</th><th>組織</th><th>国・地域</th><th>区分</th></tr></thead><tbody>'+rows.map(function(w){
+    return '<tr><td class="num">'+w.year+'</td><td><a href="'+SITE+'/entries/'+esc(w.id)+'/" target="_blank" rel="noopener">'+esc(w.title)+'</a>'+(w.titleJa&&w.titleJa!==w.title?'<span class="sub">'+esc(w.titleJa)+'</span>':'')+'</td><td>'+esc(w.org)+'</td><td>'+esc(ja(CN,w.country))+'</td><td><span class="pill">'+esc(w.label)+'</span> <span class="pill">'+(w.kind==='portfolio'?'ポートフォリオ':'単独')+'</span></td></tr>';
+  }).join('')+'</tbody>';
+}
+$('winYears').addEventListener('click',function(ev){ var b=ev.target.closest('button'); if(!b) return; wy=b.dataset.y; renderWin(); });
+renderWin();
+
+/* DJA stacked bars */
+(function(){
+  var D=S.dja, rows=D.years, W=780,H=230,L=34,R=10,Tp=18,B=26, pw=W-L-R, ph=H-Tp-B, n=rows.length, bw=pw/n;
+  var max=Math.max.apply(null,rows.map(function(r){return r.winner+r.mention+r.shortlist;})), top=Math.ceil(max/20)*20;
+  var s='<svg viewBox="0 0 '+W+' '+H+'" width="100%" style="min-width:520px" role="img" aria-label="Data Journalism Awardsの年ごとの受賞・特別表彰・ショートリスト件数">';
+  for(var g=0; g<=top; g+=20){ var gy=Tp+ph-(g/top)*ph; s+='<line class="grid" x1="'+L+'" x2="'+(W-R)+'" y1="'+gy+'" y2="'+gy+'"/><text x="'+(L-6)+'" y="'+(gy+4)+'" text-anchor="end">'+g+'</text>'; }
+  rows.forEach(function(r,i){
+    var x=L+i*bw+bw*0.2, w=bw*0.6, y=Tp+ph;
+    [['winner','var(--s1)'],['mention','var(--s2)'],['shortlist','var(--s3)']].forEach(function(p){ var h=(r[p[0]]/top)*ph; if(h>0){ y-=h; s+='<rect x="'+x+'" y="'+(y+1)+'" width="'+w+'" height="'+Math.max(0,h-2)+'" rx="2" fill="'+p[1]+'"/>'; } });
+    s+='<text class="val" x="'+(x+w/2)+'" y="'+(y-5)+'" text-anchor="middle">'+(r.winner+r.mention+r.shortlist)+'</text><text x="'+(x+w/2)+'" y="'+(H-8)+'" text-anchor="middle">'+r.year+'</text>';
+    s+='<rect class="hit" data-tip="'+r.year+'年：受賞'+r.winner+'件、特別表彰'+r.mention+'件、ショートリスト'+r.shortlist+'件" x="'+(L+i*bw)+'" y="0" width="'+bw+'" height="'+H+'"/>';
+  });
+  $('cDja').innerHTML=s+'</svg>';
+  var jp=D.japan.map(function(e){return e.year+'年の「'+e.title+'」（'+e.org+'、'+RL[e.result]+'）';}).join('、');
+  $('djaLead').textContent='確認できる記録は'+D.count+'件です。受賞の多い国は'+D.win_countries.filter(function(c){return c[0]!=='不明';}).slice(0,5).map(function(c){return ja(CN,c[0])+' '+c[1]+'件';}).join('、')+'でした。日本の作品は'+(jp||'確認できません')+'が記録に残っています。';
+})();
+$('built').textContent = (S.meta.builtAt||'').slice(0,10);
+})();
+</script>
+</body>
+</html>
