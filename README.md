@@ -40,3 +40,8 @@ python3 build.py
 - 応募データ: [The Sigma Awards projects data](https://github.com/Sigma-Awards/The-Sigma-Awards-projects-data)（The Sigma Awards / Global Investigative Journalism Network, CC BY-NC-SA 4.0）
 - このレポートの集計結果と図も、同じ [CC BY-NC-SA 4.0](https://creativecommons.org/licenses/by-nc-sa/4.0/) で提供します。利用時は出典の表示、非営利、同じ条件での共有が必要です
 - Data Journalism Awards（2012〜2019年）の記録は、保存資料で確認できる受賞・候補のみです
+
+
+## アクセス解析
+
+共通仕様は [docs/analytics.md](docs/analytics.md) を参照してください。測定IDと本番ホスト名は analytics.json に集約しています。GA管理画面の履歴変更による自動ページビューとサイト内検索の自動収集を無効にしてから公開してください。検索語を含むURLパラメータのデータ編集設定も必要です。
